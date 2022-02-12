@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+{% extends "indexmain.html" %}
+{% block content %}
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ discName }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href={% static "/stylee.css" %}>
+</link>
+<!-- <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css"> -->
+
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script> -->
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script> -->
+
+<script type="text/javascript" src={% static "/barrak.js" %}></script>
+
+<p>{{ discName }}</p>
+<table id="tble">
+  <tr id="0">
+    <th><p>№</p></th>
+    <th ><p>ФИО</p></th>
+    {% for i in dates %}
+    <th>
+      <div class = "rotate">
+        <input class="dates" type="date" id="start" value="{{i}}"</input>
+      </div>
+    </th>
+    {% endfor %}
+
+  </tr>
+  {% for i,el in di.items %}
+  <tr>
+    <th >{{ i }}</th>
+    <th id="leAlg">{{ el.0 }}</th>
+    {% for g in el.1 %}
+    <td>{{g}}</td>
+    {% endfor %}
+
+  </tr>
+  {% endfor %}
+</table>
+<div class ="keyboard">
+    <table class ="keyboard">
+      <tr>
+        <td><form method='post' id='test'><input type='submit' value='Upl' style='font-size: 25px;'/></form></td>
+        <td><button id="k1" onclick="keybev(event)">1</button></td>
+        <td><button id="k2" onclick="keybev(event)">2</button></td>
+        <td><button id="k3" onclick="keybev(event)">3</button></td>
+      </tr>
+      <tr>
+        <td><button id="kM" onclick="keyBoardModeChange()">M</button></td>
+        <td><button id="k4" onclick="keybev(event)">4</button></td>
+        <td><button id="k5" onclick="keybev(event)">5</button></td>
+        <td><button id="k6" onclick="keybev(event)">6</button></td>
+      </tr>
+      <tr>
+        <td><button id="kf" onclick="keybev(event)">н</button></td>
+        <td><button id="k7" onclick="keybev(event)">7</button></td>
+        <td><button id="k8" onclick="keybev(event)">8</button></td>
+        <td><button id="k9" onclick="keybev(event)">9</button></td>
+      </tr>
+      <tr>
+        <td><button id="kf1" onclick="directionChange()">dc→</button></td>
+        <td><button id="kf3" onclick="keybev(directionStr[direction])">N</button></td>
+        <td><button id="kf4" onclick="keybev(event)"></button></td>
+        <td><button id="k10" onclick="keybev(event)">10</button></td>
+      </tr>
+    </table>
+    <div id='message'>Initial text</div>
+
+</div>
+{% endblock %}

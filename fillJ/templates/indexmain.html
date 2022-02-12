@@ -1,0 +1,12 @@
+{% csrf_token %}
+{% load static %}
+
+<script type="text/javascript" src={% static "/jquery.js" %}></script>
+<script>
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+</script>
+<nav style = "background-color:coral">
+			<a href = "">Главная</a>
+</nav>
+{% block content %}
+{% endblock %}
