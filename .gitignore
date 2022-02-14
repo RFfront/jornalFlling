@@ -1,0 +1,11 @@
+**/__pycache__/*
+apk/*
+**/test**.py
+/settings.json
+/tmp.jpg
+jpg/*
+xls/*
+xz/*
+UT/*
+build/*
+dist/*

@@ -147,11 +147,12 @@ function uploadTableToServer(event) {
     array.push(tmpArr);
   }
   console.log(array)
+  console.log(document.location.href)
 
   $.ajax({
     type : "POST",
     url : "/resiveTable",
-    data : {"table" : JSON.stringify(array)},
+    data : {"table" : JSON.stringify(array), "params" : document.location.href},
     headers : {'X-CSRFToken' : csrftoken},
     success :
         function() { $('#message').html("<h2>Contact Form Submitted!</h2>") },

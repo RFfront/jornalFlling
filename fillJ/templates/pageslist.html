@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+{% extends "indexmain.html" %}
+{% block content %}
+  <ul>
+    {% for i,el in Pages.items %}
+  <li><a href = "{{ i }}">{{ el }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

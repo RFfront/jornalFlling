@@ -180,7 +180,8 @@ class Journal:
         self.pages = pages
         self.groupList = groupList
         self.groupname = grname
-
+    def __repr__(self):
+        return f"Journal({self.groupname})"
     def view(self,ind:int):
         pg=self.pages[ind]
         dates=[i.strftime("%Y-%m-%d") for i in pg.dates]

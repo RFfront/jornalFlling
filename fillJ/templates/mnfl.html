@@ -2,9 +2,12 @@
 {% extends "indexmain.html" %}
 {% block content %}
 <div class="jornLst">
-  
+  <ul>
+    {% for i,el in jornalStorage.items %}
+  <li><a href = "/getpage/{{i}}">{{ el }}</a></li>
+  {% endfor %}
+</ul>
  </div>
 <div class="last changes"> </div>
 
-<<<<<<<<
 {% endblock %}
