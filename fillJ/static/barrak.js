@@ -161,12 +161,38 @@ function uploadTableToServer(event) {
   });
   return false;
 }
-$(document).ready(function() { $("#test").submit(uploadTableToServer); });
+$(document).ready(function() {
+  $("#test").submit(uploadTableToServer);
+  var socket = io.connect();
 
-$(window).resize(function() {
+  socket.on(
+      'connect',
+      function() { socket.emit('my_event', {data : 'I\'m connected!'}); });
+  socket.on('disconnect', function() { console.log('Disconnected'); });
+  socket.on('my_response',
+            function(msg) { console.log('Received: ' + msg.data); });
 
+  // event handler for server sent data
+  // the data is displayed in the "Received" section of the page
+  // handlers for the different forms in the page
+  // these send data to the server in a variety of ways
+  $('form#emit').submit(function(event) {
+    socket.emit('my_event', {data : $('#emit_data').val()});
+    return false;
+  });
+  $('form#broadcast').submit(function(event) {
+    socket.emit('my_broadcast_event', {data : $('#broadcast_data').val()});
+    return false;
+  });
+
+  $('form#disconnect').submit(function(event) {
+    socket.emit('disconnect_request');
+    return false;
+  });
 });
-
+$(window).resize(function() {});
+window.onbeforeunload =
+    function() { return "Данные не сохранены. Точно перейти?"; };
 window.onload = function() {
   getTableSize();
   updateSelection();

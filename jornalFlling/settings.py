@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ["127.0.0.1","localhost"]+[f"192.168.43.{i}" for i in range(256)
 # Application definition
 
 INSTALLED_APPS = [
-    'socketio_app',
+    'fillJ',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
