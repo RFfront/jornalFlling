@@ -1,5 +1,7 @@
 var nowx = 1, nowy = 2, maxX = 1, maxY = 2, nextX = 1, nextY = 2;
 var keyBoardMode = true;
+var socket = 0;
+var sid = ""
 console.log(csrftoken)
 var direction = 0;
 var directionStr = "→↓↑←";
@@ -107,7 +109,7 @@ function selection(x, y) {
   if ((nextX >= 0 && nextX < maxX) && (nextY > 1 && nextY < maxY)) {
 
     updateSelection(nextX, nextY);
-    console.log(`Selection x=${nowx},y=${nowy}`);
+    // console.log(`Selection x=${nowx},y=${nowy}`);
   }
 }
 function getTableSize() {
@@ -130,7 +132,10 @@ function updateSelection(nextX = nowx, nextY = nowy) {
   nowx = nextX;
   nowy = nextY;
 }
-
+function getJornalNPage() {
+  var l = document.location.href.split("/");
+  return [ parseInt(l[4], 10), parseInt(l[5], 10) ];
+}
 function uploadTableToServer(event) {
   var array = [];
   var myTab = document.getElementById('tble');
@@ -146,13 +151,15 @@ function uploadTableToServer(event) {
     }
     array.push(tmpArr);
   }
-  console.log(array)
-  console.log(document.location.href)
 
   $.ajax({
     type : "POST",
     url : "/resiveTable",
-    data : {"table" : JSON.stringify(array), "params" : document.location.href},
+    data : {
+      "table" : JSON.stringify(array),
+      "params" : getJornalNPage(),
+      "sid" : sid,
+    },
     headers : {'X-CSRFToken' : csrftoken},
     success :
         function() { $('#message').html("<h2>Contact Form Submitted!</h2>") },
@@ -161,38 +168,30 @@ function uploadTableToServer(event) {
   });
   return false;
 }
+
 $(document).ready(function() {
   $("#test").submit(uploadTableToServer);
-  var socket = io.connect();
+  socket = io.connect();
 
-  socket.on(
-      'connect',
-      function() { socket.emit('my_event', {data : 'I\'m connected!'}); });
+  socket.on('connect', function() {
+    socket.emit('broadcastToServer', {lock : getJornalNPage()});
+  });
+  socket.on('updateConnect', function() {
+    socket.emit('broadcastToServer', {lock : getJornalNPage()});
+  })
   socket.on('disconnect', function() { console.log('Disconnected'); });
-  socket.on('my_response',
-            function(msg) { console.log('Received: ' + msg.data); });
-
-  // event handler for server sent data
-  // the data is displayed in the "Received" section of the page
-  // handlers for the different forms in the page
-  // these send data to the server in a variety of ways
-  $('form#emit').submit(function(event) {
-    socket.emit('my_event', {data : $('#emit_data').val()});
-    return false;
+  socket.on('sendSid', function(dat) {
+    sid = dat.sid;
+    console.log(sid);
   });
+  socket.on('server_alert', function(msg) { alert(msg); });
   $('form#broadcast').submit(function(event) {
-    socket.emit('my_broadcast_event', {data : $('#broadcast_data').val()});
-    return false;
-  });
-
-  $('form#disconnect').submit(function(event) {
-    socket.emit('disconnect_request');
+    socket.emit('broadcastToAll', {data : $('#broadcast_data').val()});
     return false;
   });
 });
 $(window).resize(function() {});
-window.onbeforeunload =
-    function() { return "Данные не сохранены. Точно перейти?"; };
+window.onbeforeunload = function() { socket.emit('disconnect_request'); };
 window.onload = function() {
   getTableSize();
   updateSelection();

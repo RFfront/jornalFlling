@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+with open("_.loc","w",encoding="utf-8") as f:
+    f.write("{}")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
@@ -29,7 +31,6 @@ ALLOWED_HOSTS = ["127.0.0.1","localhost"]+[f"192.168.43.{i}" for i in range(256)
 # Application definition
 
 INSTALLED_APPS = [
-    'fillJ',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

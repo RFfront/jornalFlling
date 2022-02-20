@@ -14,7 +14,7 @@ from django.http import HttpResponse
 import socketio
 
 basedir = os.path.dirname(os.path.realpath(__file__))
-sio = socketio.Server(async_mode=async_mode)
+sio = socketio.Server(async_mode=async_mode,ping_interval=300)
 thread = "None"
 jornalStorage=[jornal.Journal.fromFile(pat) for pat in jornal.module_dir.glob("*.Jornl")]
 pprint(jornalStorage)
@@ -27,6 +27,9 @@ def is_ajax(request):
 
 @login_required
 def getpage(request,jorn,page=None):
+    # current_user = request.user
+    # print(current_user)
+
     if page ==None:
         return render(request, 'pageslist.html',{"Pages":{i:el.discName for i,el in enumerate(jornalStorage[jorn].pages)}  })
     dates,di=jornalStorage[jorn].view(page)
@@ -37,12 +40,20 @@ def getpage(request,jorn,page=None):
 def resiveTable(request):
     if request.method == "POST":
         if is_ajax(request):
-            table=request.POST.dict()["table"]
-            jorn,page =[int(i) for i in request.POST.dict()["params"].split("/")[-3:-1]]
-            table=json.loads(table)
-            jornalStorage[jorn].pages[page].loadFromSite(table[0],table[1:])
-            jornalStorage[jorn].saveToFile()
-            return HttpResponse("1")
+            jorn,page =request.POST.dict()["params"]
+            loc=getloc()
+            if loc.get(request.POST.dict()["sid"],None) == [jorn,page]:
+                table=request.POST.dict()["table"]
+                table=json.loads(table)
+                jornalStorage[jorn].pages[page].loadFromSite(table[0],table[1:])
+                jornalStorage[jorn].saveToFile()
+                return HttpResponse(1)
+            else:
+                sio.emit('server_alert',
+                 'Кто-то другой уже изменяет эту страницу, подождите.',
+                  room=request.POST.dict()["sid"])
+
+                return HttpResponse(0)
 
 def index(request):
     global thread
@@ -57,46 +68,42 @@ def background_thread():
     while True:
         sio.sleep(10)
         count += 1
-        sio.emit('my_response', {'data': 'Server generated event'},
+        sio.emit('server_response', {'data': 'Server generated event'},
                  namespace='/test')
+def getloc()->dict:
+    dt=0
+    with open("_.loc","r",encoding="utf-8")as f:
+        dt=json.load(f)
+    return dt
+
+def writeToloc(sid,lock):
+    dt=0
+    with open("_.loc","r",encoding="utf-8")as f:
+        dt=json.load(f)
+    if lock not in dt.values():
+        dt[sid]=lock
+        with open("_.loc","w",encoding="utf-8")as f:
+            json.dump(dt, f,ensure_ascii=False)
+def delFrloc(sid):
+    dt=0
+    with open("_.loc","r",encoding="utf-8")as f:
+        dt=json.load(f)
+    if dt.pop(sid,None)!=None:
+        # dt[sid]=lock
+        with open("_.loc","w",encoding="utf-8")as f:
+            json.dump(dt, f,ensure_ascii=False)
+@sio.event
+def broadcastToServer(sid, message):
+    if "lock" in message:
+        # print(get_current_user())
+        writeToloc(sid, message["lock"])
+    print(sid,message)
+    # sio.emit('server_response', {'data': message['data']+sid}, room=sid)
 
 
 @sio.event
-def my_event(sid, message):
-    sio.emit('my_response', {'data': message['data']}, room=sid)
-
-
-@sio.event
-def my_broadcast_event(sid, message):
-    sio.emit('my_response', {'data': message['data']})
-
-
-@sio.event
-def join(sid, message):
-    sio.enter_room(sid, message['room'])
-    sio.emit('my_response', {'data': 'Entered room: ' + message['room']},
-             room=sid)
-
-
-@sio.event
-def leave(sid, message):
-    sio.leave_room(sid, message['room'])
-    sio.emit('my_response', {'data': 'Left room: ' + message['room']},
-             room=sid)
-
-
-@sio.event
-def close_room(sid, message):
-    sio.emit('my_response',
-             {'data': 'Room ' + message['room'] + ' is closing.'},
-             room=message['room'])
-    sio.close_room(message['room'])
-
-
-@sio.event
-def my_room_event(sid, message):
-    sio.emit('my_response', {'data': message['data']}, room=message['room'])
-
+def broadcastToAll(sid, message):
+    sio.emit('server_response', {'data': message['data']})
 
 @sio.event
 def disconnect_request(sid):
@@ -105,9 +112,40 @@ def disconnect_request(sid):
 
 @sio.event
 def connect(sid, environ):
-    sio.emit('my_response', {'data': 'Connected', 'count': 0}, room=sid)
+    print(f"\n{sid} Connected\n",)
+
+    sio.emit('sendSid', {'sid':sid}, room=sid)
 
 
 @sio.event
 def disconnect(sid):
-    print('Client disconnected')
+    delFrloc(sid)
+    sio.emit('updateConnect')
+    print(sid,'\nClient disconnected\n')
+
+# @sio.event
+# def join(sid, message):
+#     sio.enter_room(sid, message['room'])
+#     sio.emit('server_response', {'data': 'Entered room: ' + message['room']},
+#              room=sid)
+#
+#
+# @sio.event
+# def leave(sid, message):
+#     sio.leave_room(sid, message['room'])
+#     sio.emit('server_response', {'data': 'Left room: ' + message['room']},
+#              room=sid)
+#
+#
+# @sio.event
+# def close_room(sid, message):
+#     sio.emit('server_response',
+#              {'data': 'Room ' + message['room'] + ' is closing.'},
+#              room=message['room'])
+#     sio.close_room(message['room'])
+#
+#
+# @sio.event
+# def my_room_event(sid, message):
+#     sio.emit('server_response', {'data': message['data']}, room=message['room'])
+#
