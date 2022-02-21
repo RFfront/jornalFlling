@@ -5,10 +5,19 @@ var sid = ""
 console.log(csrftoken)
 var direction = 0;
 var directionStr = "→↓↑←";
+
 document.addEventListener('keydown', (event) => {
   const keyName = event.key;
-  // console.log(`Key pressed "${keyName}"`);
-
+  console.log(`Key pressed "${keyName}"`);
+  if (event.ctrlKey || event.metaKey) {
+    switch (String.fromCharCode(event.which).toLowerCase()) {
+    case 's':
+      event.preventDefault();
+      uploadTableToServer();
+      // alert('ctrl-s');
+      break;
+    }
+  }
   if ("ArrowDownArrowUpArrowRightArrowLeftEnter".includes(keyName)) {
     switch (keyName) {
     case 'ArrowDown':
@@ -156,9 +165,9 @@ function uploadTableToServer(event) {
     type : "POST",
     url : "/resiveTable",
     data : {
-      "table" : JSON.stringify(array),
-      "params" : getJornalNPage(),
-      "sid" : sid,
+      table : JSON.stringify(array),
+      params : JSON.stringify(getJornalNPage()),
+      sid : sid,
     },
     headers : {'X-CSRFToken' : csrftoken},
     success :
@@ -170,7 +179,6 @@ function uploadTableToServer(event) {
 }
 
 $(document).ready(function() {
-  $("#test").submit(uploadTableToServer);
   socket = io.connect();
 
   socket.on('connect', function() {
@@ -184,7 +192,10 @@ $(document).ready(function() {
     sid = dat.sid;
     console.log(sid);
   });
-  socket.on('server_alert', function(msg) { alert(msg); });
+  socket.on('server_alert', function(msg) {
+    location.reload();
+    alert(msg);
+  });
   $('form#broadcast').submit(function(event) {
     socket.emit('broadcastToAll', {data : $('#broadcast_data').val()});
     return false;

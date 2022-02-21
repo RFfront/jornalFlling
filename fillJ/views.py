@@ -16,11 +16,12 @@ import socketio
 basedir = os.path.dirname(os.path.realpath(__file__))
 sio = socketio.Server(async_mode=async_mode,ping_interval=300)
 thread = "None"
-jornalStorage=[jornal.Journal.fromFile(pat) for pat in jornal.module_dir.glob("*.Jornl")]
-pprint(jornalStorage)
+def jornalStorage():
+    return [jornal.Journal.fromFile(pat) for pat in jornal.module_dir.glob("*.Jornl")]
+pprint(jornalStorage())
 
 def main(request):
-    return render(request, 'mnfl.html',{"jornalStorage":{i:el.groupname for i,el in enumerate(jornalStorage)} })
+    return render(request, 'mnfl.html',{"jornalStorage":{i:el.groupname for i,el in enumerate(jornalStorage())} })
 
 def is_ajax(request):
     return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
@@ -29,24 +30,26 @@ def is_ajax(request):
 def getpage(request,jorn,page=None):
     # current_user = request.user
     # print(current_user)
-
+    joSto=jornalStorage()
     if page ==None:
-        return render(request, 'pageslist.html',{"Pages":{i:el.discName for i,el in enumerate(jornalStorage[jorn].pages)}  })
-    dates,di=jornalStorage[jorn].view(page)
-    context = {"dates":dates,"di":di,"discName":jornalStorage[jorn].pages[page].discName}
+        return render(request, 'pageslist.html',{"Pages":{i:el.discName for i,el in enumerate(joSto[jorn].pages)}  })
+    dates,di=joSto[jorn].view(page)
+    context = {"dates":dates,"di":di,"discName":joSto[jorn].pages[page].discName}
     return render(request, 'barrak.html', context)
 
 @login_required
 def resiveTable(request):
     if request.method == "POST":
         if is_ajax(request):
-            jorn,page =request.POST.dict()["params"]
+            jorn,page =json.loads(request.POST.dict()["params"])
             loc=getloc()
             if loc.get(request.POST.dict()["sid"],None) == [jorn,page]:
                 table=request.POST.dict()["table"]
                 table=json.loads(table)
-                jornalStorage[jorn].pages[page].loadFromSite(table[0],table[1:])
-                jornalStorage[jorn].saveToFile()
+                joSto=jornalStorage()
+
+                joSto[jorn].pages[page].loadFromSite(table[0],table[1:])
+                joSto[jorn].saveToFile()
                 return HttpResponse(1)
             else:
                 sio.emit('server_alert',
