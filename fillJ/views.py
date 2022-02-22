@@ -2,22 +2,21 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 import os
-from EduJornal import jornal
+from EduJornal import *
 from pprint import pprint
 import json
 from pathlib import Path
-async_mode = "threading"
+async_mode = None#"threading"
 
 import os
 
 from django.http import HttpResponse
-import socketio
-
-basedir = os.path.dirname(os.path.realpath(__file__))
-sio = socketio.Server(async_mode=async_mode,ping_interval=300)
+# import socketio
+#
+# sio = socketio.Server(async_mode=async_mode,ping_interval=300)
 thread = "None"
 def jornalStorage():
-    return [jornal.Journal.fromFile(pat) for pat in jornal.module_dir.glob("*.Jornl")]
+    return [Journal.fromFile(pat) for pat in module_dir.glob("*.Jornl")]
 pprint(jornalStorage())
 
 def main(request):
@@ -35,15 +34,23 @@ def getpage(request,jorn,page=None):
         return render(request, 'pageslist.html',{"Pages":{i:el.discName for i,el in enumerate(joSto[jorn].pages)}  })
     dates,di=joSto[jorn].view(page)
     context = {"dates":dates,"di":di,"discName":joSto[jorn].pages[page].discName}
+    writeToloc(request.user.id,[jorn,page])
     return render(request, 'barrak.html', context)
-
+@login_required
+def unsub(request):
+    if request.method == "POST":
+        if is_ajax(request):
+            if request.POST.dict()["exit"]:
+                print("del",request.user.id)
+                delFrloc(request.user.id)
+                return HttpResponse(1)
 @login_required
 def resiveTable(request):
     if request.method == "POST":
         if is_ajax(request):
             jorn,page =json.loads(request.POST.dict()["params"])
             loc=getloc()
-            if loc.get(request.POST.dict()["sid"],None) == [jorn,page]:
+            if loc.get(request.user.id,None) == [jorn,page]:
                 table=request.POST.dict()["table"]
                 table=json.loads(table)
                 joSto=jornalStorage()
@@ -52,9 +59,10 @@ def resiveTable(request):
                 joSto[jorn].saveToFile()
                 return HttpResponse(1)
             else:
-                sio.emit('server_alert',
-                 'Кто-то другой уже изменяет эту страницу, подождите.',
-                  room=request.POST.dict()["sid"])
+                pass
+                # sio.emit('server_alert',
+                #  'Кто-то другой уже изменяет эту страницу, подождите.',
+                #   room=request.POST.dict()["sid"])
 
                 return HttpResponse(0)
 
@@ -91,40 +99,41 @@ def delFrloc(sid):
     dt=0
     with open("_.loc","r",encoding="utf-8")as f:
         dt=json.load(f)
-    if dt.pop(sid,None)!=None:
-        # dt[sid]=lock
-        with open("_.loc","w",encoding="utf-8")as f:
-            json.dump(dt, f,ensure_ascii=False)
-@sio.event
-def broadcastToServer(sid, message):
-    if "lock" in message:
-        # print(get_current_user())
-        writeToloc(sid, message["lock"])
-    print(sid,message)
-    # sio.emit('server_response', {'data': message['data']+sid}, room=sid)
-
-
-@sio.event
-def broadcastToAll(sid, message):
-    sio.emit('server_response', {'data': message['data']})
-
-@sio.event
-def disconnect_request(sid):
-    sio.disconnect(sid)
-
-
-@sio.event
-def connect(sid, environ):
-    print(f"\n{sid} Connected\n",)
-
-    sio.emit('sendSid', {'sid':sid}, room=sid)
-
-
-@sio.event
-def disconnect(sid):
-    delFrloc(sid)
-    sio.emit('updateConnect')
-    print(sid,'\nClient disconnected\n')
+    print(dt)
+    dt.pop(str(sid))
+    with open("_.loc","w",encoding="utf-8")as f:
+        json.dump(dt, f,ensure_ascii=False)
+#
+# @sio.event
+# def broadcastToServer(sid, message):
+#     if "lock" in message:
+#         # print(get_current_user())
+#         writeToloc(sid, message["lock"])
+#     print(sid,message)
+#     # sio.emit('server_response', {'data': message['data']+sid}, room=sid)
+#
+#
+# @sio.event
+# def broadcastToAll(sid, message):
+#     sio.emit('server_response', {'data': message['data']})
+#
+# @sio.event
+# def disconnect_request(sid):
+#     sio.disconnect(sid)
+#
+#
+# @sio.event
+# def connect(sid, environ):
+#     print(f"\n{sid} Connected\n",)
+#
+#     sio.emit('sendSid', {'sid':sid}, room=sid)
+#
+#
+# @sio.event
+# def disconnect(sid):
+#     delFrloc(sid)
+#     sio.emit('updateConnect')
+#     print(sid,'\nClient disconnected\n')
 
 # @sio.event
 # def join(sid, message):

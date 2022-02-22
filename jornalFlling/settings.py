@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-#40vxuutxw+3fd9%z7d523=3-rx#sam51+micu+_@yc-*h_%m7
 DEBUG = True
 # Redirect to home URL after login (Default redirects to /accounts/profile/)
 LOGIN_REDIRECT_URL = '/'
-ALLOWED_HOSTS = ["127.0.0.1","localhost"]+[f"192.168.43.{i}" for i in range(256)]
+ALLOWED_HOSTS = ["127.0.0.1","localhost","rffront.pythonanywhere.com"]
 # print(ALLOWED_HOSTS)
 # Application definition
 

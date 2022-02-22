@@ -167,7 +167,6 @@ function uploadTableToServer(event) {
     data : {
       table : JSON.stringify(array),
       params : JSON.stringify(getJornalNPage()),
-      sid : sid,
     },
     headers : {'X-CSRFToken' : csrftoken},
     success :
@@ -179,6 +178,7 @@ function uploadTableToServer(event) {
 }
 
 $(document).ready(function() {
+  /*
   socket = io.connect();
 
   socket.on('connect', function() {
@@ -196,13 +196,24 @@ $(document).ready(function() {
     location.reload();
     alert(msg);
   });
-  $('form#broadcast').submit(function(event) {
-    socket.emit('broadcastToAll', {data : $('#broadcast_data').val()});
-    return false;
-  });
+    socket.emit('broadcastToAll', {data : $('#broadcast_data').val()});*/
 });
 $(window).resize(function() {});
-window.onbeforeunload = function() { socket.emit('disconnect_request'); };
+window.onbeforeunload = function() {
+  // socket.emit('disconnect_request');
+  $.ajax({
+    type : "POST",
+    url : "/unsub",
+    data : {
+      exit : true,
+    },
+    headers : {'X-CSRFToken' : csrftoken},
+    success :
+        function() { $('#message').html("<h2>Contact Form Submitted!</h2>") },
+    error : function() { $('#message').html("<h2>Contact Form error!</h2>") }
+
+  });
+};
 window.onload = function() {
   getTableSize();
   updateSelection();
