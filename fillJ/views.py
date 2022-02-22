@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 import os
-from . import jornal
+from EduJornal import jornal
 from pprint import pprint
 import json
 from pathlib import Path
