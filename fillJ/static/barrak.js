@@ -77,7 +77,7 @@ function keyBoardModeChange() {
   document.getElementById('k7').innerHTML = keyBoardMode ? "" : "7";
   document.getElementById('k8').innerHTML = keyBoardMode ? "↓" : "8";
   document.getElementById('k9').innerHTML = keyBoardMode ? "" : "9";
-  document.getElementById('k10').innerHTML = keyBoardMode ? "" : "10";
+  document.getElementById('k10').innerHTML = keyBoardMode ? "+" : "10";
 
   if (keyBoardMode) {
     keyBoardMode = false;
@@ -105,11 +105,30 @@ function keybev(ev) {
   case "←":
     selection(0, -1);
     break;
+  case "+":
+    addColumn();
+    break;
   default:
     document.getElementById('tble').rows.item(nowx).cells.item(nowy).innerHTML =
         keyName;
     keybev(directionStr[direction]);
   }
+}
+function addColumn() {
+  table = document.getElementById('tble');
+  var columns = table.rows[0].getElementsByTagName('td').length;
+  var cell = table.rows[0].insertCell(-1);
+  var now = new Date().toISOString().slice(0, 10);
+  console.log(now);
+  cell.innerHTML =
+      "<div class = 'rotate'><input class='dates' type='date' id='start' value='" +
+      now + "'</input></div>";
+  for (var r = 1; r < table.rows.length; r++) {
+    var cell = table.rows[r].insertCell(-1);
+    cell.innerHTML = '';
+  }
+  $('.rotate').css('width', $('.rotate').height());
+  getTableSize();
 }
 function selection(x, y) {
   var nextX = (nowx + x);
@@ -122,6 +141,7 @@ function selection(x, y) {
   }
 }
 function getTableSize() {
+
   var myTab = document.getElementById('tble');
   if (myTab) {
     maxX = myTab.rows.length;

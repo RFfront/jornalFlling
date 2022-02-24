@@ -8,7 +8,7 @@ urlpatterns = [
     path('test/', views.index, name='index'),
     path('getpage/<int:jorn>/<int:page>/', views.getpage, name='getpage'),
     path('getpage/<int:jorn>/', views.getpage, name='getpage'),
-
+    path('signup/', views.SignUpView.as_view(), name='signup'),
     path('resiveTable',views.resiveTable,name="resiveTable")
 ]
 #Add Django site authentication urls (for login, logout, password management)

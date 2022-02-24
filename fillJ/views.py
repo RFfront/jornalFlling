@@ -7,7 +7,14 @@ from pprint import pprint
 import json
 from pathlib import Path
 async_mode = None#"threading"
-
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import Permission
+from django.urls import reverse_lazy
+from django.views import generic
+class SignUpView(generic.CreateView):
+    form_class = UserCreationForm
+    success_url = reverse_lazy('login')
+    template_name = 'registration/signup.html'
 import os
 
 from django.http import HttpResponse
@@ -18,7 +25,9 @@ thread = "None"
 def jornalStorage():
     return [Journal.fromFile(pat) for pat in module_dir.glob("*.Jornl")]
 pprint(jornalStorage())
-
+def canEditJournal(user):
+    return 25 in [x.id for x in Permission.objects.filter(user=user)]
+@login_required
 def main(request):
     return render(request, 'mnfl.html',{"jornalStorage":{i:el.groupname for i,el in enumerate(jornalStorage())} })
 
@@ -27,21 +36,27 @@ def is_ajax(request):
 
 @login_required
 def getpage(request,jorn,page=None):
-    # current_user = request.user
-    # print(current_user)
     joSto=jornalStorage()
     if page ==None:
-        return render(request, 'pageslist.html',{"Pages":{i:el.discName for i,el in enumerate(joSto[jorn].pages)}  })
+        return render(request, 'pageslist.html',{
+        "Pages":{i:el.discName for i,el in enumerate(joSto[jorn].pages)}  })
     dates,di=joSto[jorn].view(page)
-    context = {"dates":dates,"di":di,"discName":joSto[jorn].pages[page].discName}
-    writeToloc(request.user.id,[jorn,page])
+    canEdit=canEditJournal(request.user)
+    context = {
+    "dates":dates,
+    "di":di,
+    "discName":joSto[jorn].pages[page].discName,
+    "canEdit":canEdit
+    }
+    if canEdit:
+        writeToloc(request.user.id,[jorn,page])
     return render(request, 'barrak.html', context)
 @login_required
 def unsub(request):
     if request.method == "POST":
         if is_ajax(request):
             if request.POST.dict()["exit"]:
-                print("del",request.user.id)
+                # print("del",request.user.id)
                 delFrloc(request.user.id)
                 return HttpResponse(1)
 @login_required
@@ -50,7 +65,8 @@ def resiveTable(request):
         if is_ajax(request):
             jorn,page =json.loads(request.POST.dict()["params"])
             loc=getloc()
-            if loc.get(request.user.id,None) == [jorn,page]:
+            if loc.get(str(request.user.id),None) == [jorn,page] and canEditJournal(request.user):
+                print(f"Table {jorn,page} updating")
                 table=request.POST.dict()["table"]
                 table=json.loads(table)
                 joSto=jornalStorage()
